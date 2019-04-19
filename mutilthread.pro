@@ -21,7 +21,9 @@ SOURCES += \
     workitem.cpp \
     request.cpp \
     workqueue.cpp \
-    run.cpp
+    run.cpp \
+    cscheduler.cpp \
+    closure.cpp
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
@@ -36,4 +38,7 @@ HEADERS += \
     workitem.h \
     request.h \
     workqueue.h \
-    run.h
+    run.h \
+    cscheduler.h \
+    reverselock.h \
+    threadgroup.h
