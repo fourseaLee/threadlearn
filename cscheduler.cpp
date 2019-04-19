@@ -2,6 +2,8 @@
 #include <assert.h>
 #include <binders.h>
 #include <functional>
+#include "reverselock.h"
+
 
 
 CScheduler::CScheduler():nthreads_servicing_queue_(0),stop_requested_(false),stop_when_empty_(false)
@@ -16,11 +18,11 @@ CScheduler::~CScheduler()
 
 void CScheduler::schedule(CScheduler::Function f, std::chrono::system_clock::time_point t)
 {
-       {
-           std::unique_lock<std::mutex> lock(new_task_mutex_);
-           task_queue_.insert(std::make_pair(t, f));
-       }
-       new_task_scheduled_.notify_one();
+    {
+        std::unique_lock<std::mutex> lock(new_task_mutex_);
+        task_queue_.insert(std::make_pair(t, f));
+    }
+    new_task_scheduled_.notify_one();
 }
 
 void CScheduler::scheduleFromNow(CScheduler::Function f, uint64_t delat_millon_seconds)
@@ -31,7 +33,7 @@ void CScheduler::scheduleFromNow(CScheduler::Function f, uint64_t delat_millon_s
 static void Repeat(CScheduler* s, CScheduler::Function f, int64_t deltaMilliSeconds)
 {
     f();
-    s->scheduleFromNow(boost::bind(&Repeat, s, f, deltaMilliSeconds), deltaMilliSeconds);
+    s->scheduleFromNow(std::bind(&Repeat, s, f, deltaMilliSeconds), deltaMilliSeconds);
 }
 
 void CScheduler::scheduleEvery(CScheduler::Function f, uint64_t delat_millon_seconds)
@@ -54,7 +56,8 @@ void CScheduler::serviceQueue()
                 reverse_lock<std::unique_lock<std::mutex> > rlock(lock);
                 // Use this chance to get a tiny bit more entropy
                 //   RandAddSeedSleep();
-                sleep(1);
+                //sleep(1);
+                std::this_thread::sleep_for(std::chrono::seconds(1));
             }
             while (!shouldStop() && task_queue_.empty()) {
                 // Wait until there is something to do.
@@ -72,7 +75,7 @@ void CScheduler::serviceQueue()
             }
             // If there are multiple threads, the queue can empty while we're waiting (another
             // thread may service the task we were waiting on).
-            if (shouldStop() || taskQueue.empty())
+            if (shouldStop() || task_queue_.empty())
                 continue;
 
             Function f = task_queue_.begin()->second;
