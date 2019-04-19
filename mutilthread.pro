@@ -23,7 +23,8 @@ SOURCES += \
     workqueue.cpp \
     run.cpp \
     cscheduler.cpp \
-    closure.cpp
+    closure.cpp \
+    cclock.cpp
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
@@ -41,4 +42,5 @@ HEADERS += \
     run.h \
     cscheduler.h \
     reverselock.h \
-    threadgroup.h
+    threadgroup.h \
+    cclock.h
